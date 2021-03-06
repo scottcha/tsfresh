@@ -15,7 +15,7 @@ from collections.abc import Generator, Iterable
 from functools import partial
 from multiprocessing import Pool
 from itertools import takewhile, islice, repeat
-
+from joblib import Parallel, delayed
 from tqdm import tqdm
 
 from tsfresh.feature_extraction.data import TsData
@@ -397,6 +397,51 @@ class ClusterDaskDistributor(IterableDistributorBaseClass):
         """
         self.client.close()
 
+class JoblibDistributer(IterableDistributorBaseClass):
+    def __init__(self, n_workers, disable_progressbar=False, progressbar_title="Feature Extraction",
+                 show_warnings=True):
+        """
+        Creates a new MultiprocessingDistributor instance
+
+        :param n_workers: How many workers should the multiprocessing pool have?
+        :type n_workers: int
+        :param disable_progressbar: whether to show a progressbar or not.
+        :type disable_progressbar: bool
+        :param progressbar_title: the title of the progressbar
+        :type progressbar_title: basestring
+        :param show_warnings: whether to show warnings or not.
+        :type show_warnings: bool
+        """
+        #self.pool = Pool(processes=n_workers, initializer=initialize_warnings_in_workers, initargs=(show_warnings,))
+        self.n_workers = n_workers
+        self.disable_progressbar = disable_progressbar
+        self.progressbar_title = progressbar_title
+
+    def distribute(self, func, partitioned_chunks, kwargs):
+        """
+        Calculates the features in a parallel fashion by distributing the map command to a thread pool
+
+        :param func: the function to send to each worker.
+        :type func: callable
+        :param partitioned_chunks: The list of data chunks - each element is again
+            a list of chunks - and should be processed by one worker.
+        :type partitioned_chunks: iterable
+        :param kwargs: parameters for the map function
+        :type kwargs: dict of string to parameter
+
+        :return: The result of the calculation as a list - each item should be the result of the application of func
+            to a single element.
+        """
+        print("backend loky*")
+        return Parallel(n_jobs=self.n_workers, backend="loky")(map(delayed(partial(func, **kwargs)), partitioned_chunks))
+
+    def close(self):
+        """
+        Collects the result from the workers and closes the thread pool.
+        """
+        #self.pool.close()
+        #self.pool.terminate()
+        #self.pool.join()
 
 class MultiprocessingDistributor(IterableDistributorBaseClass):
     """
@@ -437,6 +482,7 @@ class MultiprocessingDistributor(IterableDistributorBaseClass):
         :return: The result of the calculation as a list - each item should be the result of the application of func
             to a single element.
         """
+        print("backend default multiprocessing")
         return self.pool.imap_unordered(partial(func, **kwargs), partitioned_chunks)
 
     def close(self):

@@ -17,7 +17,7 @@ from tsfresh.feature_extraction.data import to_tsdata
 from tsfresh.feature_extraction.settings import ComprehensiveFCParameters
 from tsfresh.utilities import profiling
 from tsfresh.utilities.distribution import MapDistributor, MultiprocessingDistributor, \
-    DistributorBaseClass, ApplyDistributor
+    DistributorBaseClass, ApplyDistributor, JoblibDistributer
 from tsfresh.utilities.string_manipulation import convert_to_output_format
 
 _logger = logging.getLogger(__name__)
@@ -241,6 +241,10 @@ def _do_extraction(df, column_id, column_value, column_kind, column_sort,
                                                          disable_progressbar=disable_progressbar,
                                                          progressbar_title="Feature Extraction",
                                                          show_warnings=show_warnings)
+                # distributor = JoblibDistributer(n_workers=n_jobs,
+                #                                 disable_progressbar=disable_progressbar,
+                #                                 progressbar_title="Feature Extraction",
+                #                                 show_warnings=show_warnings)
         else:
             distributor = ApplyDistributor(meta=[(data.column_id, 'int64'), ('variable', 'object'),
                                                  ('value', 'float64')])

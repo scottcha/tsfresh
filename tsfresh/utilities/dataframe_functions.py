@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from tsfresh import defaults
-from tsfresh.utilities.distribution import MapDistributor, MultiprocessingDistributor, DistributorBaseClass
+from tsfresh.utilities.distribution import MapDistributor, MultiprocessingDistributor, JoblibDistributer, DistributorBaseClass
 
 
 def check_for_nans_in_columns(df, columns=None):
@@ -483,6 +483,10 @@ def roll_time_series(df_or_dict, column_id, column_sort=None, column_kind=None,
                                                      disable_progressbar=disable_progressbar,
                                                      progressbar_title="Rolling",
                                                      show_warnings=show_warnings)
+            # distributor = JoblibDistributer(n_workers=n_jobs,
+            #                                 disable_progressbar=disable_progressbar,
+            #                                 progressbar_title="Rolling",
+            #                                 show_warnings=show_warnings)
 
     if not isinstance(distributor, DistributorBaseClass):
         raise ValueError("the passed distributor is not an DistributorBaseClass object")
